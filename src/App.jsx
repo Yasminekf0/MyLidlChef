@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Journey from './Journey';
 
 const LIDL_COLORS = {
   blue: '#0050AA',
@@ -84,17 +85,20 @@ function App() {
         }),
       });
 
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        throw new Error('Empty response from API');
+      }
+
+      const data = JSON.parse(text);
       console.log('Frontend: Response status:', response.status);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Frontend: API error response:', errorData);
-        throw new Error(`API returned ${response.status}: ${errorData.error}`);
+        console.error('Frontend: API error response:', data);
+        throw new Error(data?.error ? `API returned ${response.status}: ${data.error}` : `API returned ${response.status}`);
       }
 
-      const data = await response.json();
       console.log('Frontend: Recipe received:', { dishName: data.dishName, ingredientCount: data.ingredients?.length });
-
       setRecipe(data);
       setSelectedIngredients(data.ingredients.map((_, i) => i));
 
@@ -108,7 +112,7 @@ function App() {
       console.error('Frontend: FULL ERROR:', err);
       console.error('Frontend: Error message:', err?.message);
       console.error('Frontend: Error stack:', err?.stack);
-      setError('Oops, our chef is taking a break! 🍳 Try again.');
+      setError(err?.message || 'Oops, our chef is taking a break! 🍳 Try again.');
       setLoading(false);
       setScreen('input');
     }
@@ -162,17 +166,40 @@ function App() {
   return (
     <div className="min-h-screen py-8 px-4">
       <div
-        className="max-w-[390px] mx-auto bg-white rounded-[32px] overflow-hidden shadow-2xl"
+        className="relative max-w-[390px] mx-auto bg-white rounded-[32px] overflow-hidden shadow-2xl"
         style={{ minHeight: '844px' }}
       >
+        {/* Journey Screen */}
+        {screen === 'journey' && (
+          <Journey
+            onBack={() => setScreen('input')}
+            onContinue={() => setScreen('input')}
+          />
+        )}
+
+        {/* Main app (input / loading / result) */}
+        {screen !== 'journey' && (
+        <>
         {/* Header */}
         <div
           className="px-6 py-5"
           style={{ backgroundColor: LIDL_COLORS.blue }}
         >
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">👨‍🍳</span>
-            <h1 className="font-nunito font-bold text-white text-2xl">MyLidlChef</h1>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">👨‍🍳</span>
+              <h1 className="font-nunito font-bold text-white text-2xl">MyLidlChef</h1>
+            </div>
+            {screen === 'input' && (
+              <button
+                onClick={() => setScreen('journey')}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-lg hover:scale-110 transition-transform shrink-0"
+                style={{ backgroundColor: LIDL_COLORS.yellow }}
+                aria-label="Min Madrejse"
+              >
+                🏆
+              </button>
+            )}
           </div>
           <p className="text-white/90 text-sm font-dm-sans">Cook smart. Eat well. Save more.</p>
         </div>
@@ -474,6 +501,8 @@ function App() {
               ← Try another recipe
             </button>
           </div>
+        )}
+        </>
         )}
       </div>
 

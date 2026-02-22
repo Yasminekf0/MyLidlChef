@@ -48,6 +48,8 @@ function App() {
   const [error, setError] = useState(null);
   const [floatingEmojis, setFloatingEmojis] = useState([]);
   const [recipeImage, setRecipeImage] = useState(null);
+  const [beginnerMode, setBeginnerMode] = useState(false);
+  const [prioritizeDiscounts, setPrioritizeDiscounts] = useState(false);
 
   const fetchRecipeImage = async (dishName) => {
     try {
@@ -92,7 +94,7 @@ function App() {
 
       let factTimer = setInterval(() => {
         setFactIndex(prev => (prev + 1) % FUN_FACTS.length);
-      }, 800);
+      }, 3500);
 
       console.log('Frontend: Calling /api/recipe with:', { budgetVal, ingredientsCount: ingredientsList?.length, isSurpriseMe });
 
@@ -103,6 +105,8 @@ function App() {
           budget: budgetVal,
           ingredients: ingredientsList,
           surpriseMe: isSurpriseMe,
+          beginnerMode,
+          prioritizeDiscounts,
         }),
       });
 
@@ -137,6 +141,8 @@ function App() {
       setError(err?.message || 'Oops, our chef is taking a break! 🍳 Try again.');
       setLoading(false);
       setRecipeImage(null);
+      setBeginnerMode(false);
+      setPrioritizeDiscounts(false);
       setScreen('input');
     }
   };
@@ -167,6 +173,8 @@ function App() {
 
   const handleBack = () => {
     setRecipeImage(null);
+    setBeginnerMode(false);
+    setPrioritizeDiscounts(false);
     setScreen('input');
     setBudgetEnabled(false);
     setBudget(75);
@@ -196,8 +204,8 @@ function App() {
         {/* Journey Screen */}
         {screen === 'journey' && (
           <Journey
-            onBack={() => { setRecipeImage(null); setScreen('input'); }}
-            onContinue={() => { setRecipeImage(null); setScreen('input'); }}
+            onBack={() => { setRecipeImage(null); setBeginnerMode(false); setPrioritizeDiscounts(false); setScreen('input'); }}
+            onContinue={() => { setRecipeImage(null); setBeginnerMode(false); setPrioritizeDiscounts(false); setScreen('input'); }}
           />
         )}
 
@@ -329,6 +337,112 @@ function App() {
               )}
             </div>
 
+            {/* Beginner Mode Toggle */}
+            <div style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '16px 20px',
+              marginBottom: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '28px' }}>👶</span>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '16px', color: '#1a1a1a' }}>
+                    Nybegynder tilstand
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                    Enkle opskrifter med få ingredienser
+                  </div>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={beginnerMode}
+                onChange={(e) => setBeginnerMode(e.target.checked)}
+                style={{ display: 'none' }}
+                id="beginnerToggle"
+              />
+              <label htmlFor="beginnerToggle" style={{
+                width: '51px',
+                height: '31px',
+                background: beginnerMode ? '#0050AA' : '#ccc',
+                borderRadius: '999px',
+                cursor: 'pointer',
+                position: 'relative',
+                transition: 'background 0.2s ease',
+                flexShrink: 0
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: beginnerMode ? '23px' : '3px',
+                  width: '25px',
+                  height: '25px',
+                  background: 'white',
+                  borderRadius: '50%',
+                  transition: 'left 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }} />
+              </label>
+            </div>
+
+            {/* Prioritize Discounts Toggle */}
+            <div style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '16px 20px',
+              marginBottom: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '28px' }}>🔥</span>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '16px', color: '#1a1a1a' }}>
+                    Brug dagens tilbud
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                    Prioriter ingredienser på tilbud
+                  </div>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={prioritizeDiscounts}
+                onChange={(e) => setPrioritizeDiscounts(e.target.checked)}
+                style={{ display: 'none' }}
+                id="discountToggle"
+              />
+              <label htmlFor="discountToggle" style={{
+                width: '51px',
+                height: '31px',
+                background: prioritizeDiscounts ? '#E60A14' : '#ccc',
+                borderRadius: '999px',
+                cursor: 'pointer',
+                position: 'relative',
+                transition: 'background 0.2s ease',
+                flexShrink: 0
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: prioritizeDiscounts ? '23px' : '3px',
+                  width: '25px',
+                  height: '25px',
+                  background: 'white',
+                  borderRadius: '50%',
+                  transition: 'left 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }} />
+              </label>
+            </div>
+
             {/* Find Recipe Button */}
             <button
               onClick={handleFindRecipe}
@@ -366,6 +480,40 @@ function App() {
         {/* LOADING SCREEN */}
         {screen === 'loading' && (
           <div className="p-6 space-y-4">
+            {(beginnerMode || prioritizeDiscounts) && (
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'center',
+                marginBottom: '16px',
+                flexWrap: 'wrap'
+              }}>
+                {beginnerMode && (
+                  <span style={{
+                    background: '#EEF4FF',
+                    color: '#0050AA',
+                    borderRadius: '999px',
+                    padding: '6px 14px',
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}>
+                    👶 Nybegynder tilstand aktiv
+                  </span>
+                )}
+                {prioritizeDiscounts && (
+                  <span style={{
+                    background: '#FFF0F0',
+                    color: '#E60A14',
+                    borderRadius: '999px',
+                    padding: '6px 14px',
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}>
+                    🔥 Tilbuds-fokus aktiv
+                  </span>
+                )}
+              </div>
+            )}
             <div className="shimmer rounded-2xl h-48"></div>
             <div className="shimmer rounded-xl h-8 w-3/4"></div>
             <div className="space-y-2">
@@ -377,10 +525,10 @@ function App() {
             <div className="shimmer rounded-xl h-32"></div>
 
             <div
-              className="mt-8 p-4 rounded-xl text-center fade-in"
+              className="mt-8 p-4 rounded-xl text-center"
               style={{ backgroundColor: LIDL_COLORS.yellow }}
             >
-              <p className="font-dm-sans text-sm" style={{ color: LIDL_COLORS.blue }}>
+              <p key={factIndex} className="font-dm-sans text-sm fact-fade-in" style={{ color: LIDL_COLORS.blue }}>
                 {FUN_FACTS[factIndex]}
               </p>
             </div>
@@ -428,6 +576,34 @@ function App() {
                 {recipe.dishName}
               </h2>
               <p className="text-gray-600 text-sm mt-1">{recipe.funIntro}</p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px', justifyContent: 'center' }}>
+                {recipe.isBeginnerFriendly && (
+                  <span style={{
+                    background: '#EEF4FF',
+                    color: '#0050AA',
+                    border: '1px solid #0050AA',
+                    borderRadius: '999px',
+                    padding: '4px 12px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
+                    👶 Nybegynder venlig
+                  </span>
+                )}
+                {recipe.discountsFocused && (
+                  <span style={{
+                    background: '#FFF0F0',
+                    color: '#E60A14',
+                    border: '1px solid #E60A14',
+                    borderRadius: '999px',
+                    padding: '4px 12px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
+                    🔥 Tilbuds-optimeret
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Ingredient List */}

@@ -94,7 +94,27 @@ export default async function handler(req, res) {
   }
   try {
     const groq = new Groq({ apiKey });
-    const { budget, ingredients, surpriseMe } = req.body;
+    const { budget, ingredients, surpriseMe, beginnerMode, prioritizeDiscounts } = req.body;
+
+    const beginnerInstructions = beginnerMode ? `
+BEGINNER MODE IS ACTIVE:
+- Use MAXIMUM 4 ingredients total, no exceptions
+- Choose only the simplest, most recognizable ingredients
+- Write steps as if explaining to someone who has NEVER cooked before — short sentences, no assumed knowledge
+- Each step maximum 2 sentences
+- Avoid any technique more complex than boiling, frying or mixing
+- The dish must be completable in under 30 minutes
+- Add "isBeginnerFriendly": true to your JSON response
+` : '- Add "isBeginnerFriendly": false to your JSON response';
+
+    const discountInstructions = prioritizeDiscounts ? `
+DISCOUNT PRIORITY MODE IS ACTIVE:
+- You MUST build the entire recipe around onSale items from the product list
+- At least 4 out of your ingredients must have onSale: true
+- Pick the protein, carb AND vegetable components all from sale items where possible
+- The savings number should be maximized — pick the highest-value sale items
+- Add "discountsFocused": true to your JSON response
+` : '- Add "discountsFocused": false to your JSON response';
 
     const systemPrompt = `You are a JSON-only API for MyLidlChef, a healthy cooking app for young people in Denmark.
 Return ONLY a valid JSON object. No markdown, no backticks, no explanations, no emoji characters anywhere.
@@ -131,7 +151,11 @@ RULES:
 - 4-6 beginner-friendly cooking steps in Danish
 - Always healthy and nutritious
 - Stay under budget if given
-- Use provided ingredients where possible if given`;
+- Use provided ingredients where possible if given
+
+${beginnerInstructions}
+
+${discountInstructions}`;
 
     let userPrompt = '';
     if (surpriseMe) {
@@ -145,7 +169,7 @@ RULES:
 
     const message = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
-      max_tokens: 1500,
+      max_tokens: beginnerMode ? 800 : 1500,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },

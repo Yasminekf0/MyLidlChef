@@ -47,6 +47,27 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [floatingEmojis, setFloatingEmojis] = useState([]);
+  const [recipeImage, setRecipeImage] = useState(null);
+
+  const fetchRecipeImage = async (dishName) => {
+    try {
+      const query = encodeURIComponent(dishName + ' food dish');
+      const response = await fetch(
+        `https://api.unsplash.com/search/photos?query=${query}&per_page=1&orientation=landscape`,
+        {
+          headers: {
+            Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        setRecipeImage(data.results[0].urls.regular);
+      }
+    } catch (err) {
+      console.error('Image fetch failed:', err);
+    }
+  };
 
   const handleAddIngredient = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -101,6 +122,7 @@ function App() {
       console.log('Frontend: Recipe received:', { dishName: data.dishName, ingredientCount: data.ingredients?.length });
       setRecipe(data);
       setSelectedIngredients(data.ingredients.map((_, i) => i));
+      fetchRecipeImage(data.dishName);
 
       setTimeout(() => {
         clearInterval(factTimer);
@@ -114,6 +136,7 @@ function App() {
       console.error('Frontend: Error stack:', err?.stack);
       setError(err?.message || 'Oops, our chef is taking a break! 🍳 Try again.');
       setLoading(false);
+      setRecipeImage(null);
       setScreen('input');
     }
   };
@@ -143,6 +166,7 @@ function App() {
   };
 
   const handleBack = () => {
+    setRecipeImage(null);
     setScreen('input');
     setBudgetEnabled(false);
     setBudget(75);
@@ -172,8 +196,8 @@ function App() {
         {/* Journey Screen */}
         {screen === 'journey' && (
           <Journey
-            onBack={() => setScreen('input')}
-            onContinue={() => setScreen('input')}
+            onBack={() => { setRecipeImage(null); setScreen('input'); }}
+            onContinue={() => { setRecipeImage(null); setScreen('input'); }}
           />
         )}
 
@@ -366,14 +390,37 @@ function App() {
         {/* RESULT SCREEN */}
         {screen === 'result' && recipe && (
           <div className="p-6 space-y-5 slide-up">
-            {/* Dish Name & Emoji */}
+            {/* Dish Name & Image/Emoji */}
             <div className="text-center stagger-1 slide-up">
-              <div
-                className="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-5xl"
-                style={{ backgroundColor: LIDL_COLORS.yellow }}
-              >
-                {recipe.heroEmoji}
-              </div>
+              {recipeImage ? (
+                <div style={{
+                  width: '100%',
+                  height: '200px',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  marginBottom: '16px'
+                }}>
+                  <img
+                    src={recipeImage}
+                    alt={recipe.dishName}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              ) : (
+                <div style={{
+                  width: '100%',
+                  height: '200px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '72px',
+                  marginBottom: '16px'
+                }}>
+                  {recipe.heroEmoji}
+                </div>
+              )}
               <h2
                 className="font-nunito font-bold text-2xl"
                 style={{ color: LIDL_COLORS.blue }}

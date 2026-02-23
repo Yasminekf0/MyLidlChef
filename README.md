@@ -1,135 +1,149 @@
-# MyLidlChef
+# 🧑‍🍳 MyLidlChef
 
-A mobile-first web app for Lidl+ targeting young people who want to cook healthier on a budget. Built with React, Tailwind CSS, and Groq AI.
+A smart AI-powered recipe generator built as a feature concept for the **Lidl+ app**, designed to help young people in Denmark cook healthier meals on a budget — using real Lidl products at real prices.
 
-## Features
+Built in 48 hours as part of a hackathon, MyLidlChef turns your ingredients and budget into a full recipe, complete with a Lidl shopping list, live discount badges, and a gamified cooking journey.
 
-- **Budget-Based Recipes** - Set your budget (20-300 DKK) to find recipes within your price range
-- **Ingredient Input** - Add ingredients you already have to find matching recipes
-- **Surprise Me** - Let the AI pick a random healthy recipe for you
-- **AI-Powered** - Uses Groq's Llama 3.3 to generate unique recipes every time
-- **Shopping List Integration** - Add ingredients to your Lidl Shopping List
-- **Real Lidl Pricing** - Realistic Danish DKK prices and fictional Lidl product names
-- **Savings Tracking** - Shows how much you save with daily deals
+---
 
-## Setup
+## 🚀 Features
 
-### 1. Clone the repository
-```bash
-git clone <repo-url>
-cd mylidlchef
-```
+* 💰 **Budget Mode** — Set a DKK budget with a slider and get a recipe that stays under it
+* 🥦 **Ingredient Mode** — Enter what you already have and build a recipe around it
+* 🎲 **Surprise Me** — One-tap random recipe with a fun spin animation
+* 🔥 **Prioritize Discounts** — Toggle to build recipes around today's Lidl sale items
+* 👶 **Beginner Mode** — Simplified recipes with max 4 ingredients and step-by-step instructions for first-time cooks
+* 🏷️ **TILBUD Badges** — On-sale ingredients are highlighted with a red sale sticker
+* 🛒 **Add to Lidl Shopping List** — Select ingredients and add them in one tap
+* 💸 **Savings Banner** — Shows exactly how much you save with today's deals in DKK
+* 🏆 **Journey Page** — Duolingo-style gamification tracking your progress from Beginner Chef to Master Chef
+* 📸 **Recipe Images** — Auto-fetched food photography via Unsplash API
+* ⚡ **Loading Skeleton** — Shimmer placeholder with rotating healthy eating fun facts
 
-### 2. Install dependencies
-```bash
-npm install
-```
+---
 
-### 3. Get a Groq API key
-1. Sign up at [console.groq.com](https://console.groq.com)
-2. Create an API key in your account settings
-3. Copy your API key
+## 🛠 Architecture & Tech Stack
 
-### 4. Set up environment variables
-```bash
-cp .env.example .env
-```
+* **Frontend** — React (Vite), Tailwind CSS, deployed as a mobile-first PWA-style web app
+* **Backend** — Vercel Serverless Functions (`/api/recipe.js`)
+* **AI** — Groq API with `llama-3.3-70b-versatile` for real-time recipe generation
+* **Images** — Unsplash API for dish photography
+* **Deployment** — Vercel (auto-deploys from GitHub on every push)
 
-Edit `.env` and add your Groq API key:
-```
-GROQ_API_KEY=your_key_here
-```
+### How the AI works
 
-### 5. For local development with serverless functions
-
-Install Vercel CLI:
-```bash
-npm install -g vercel
-```
-
-Run the development server with serverless function support:
-```bash
-vercel dev
-```
-
-The app will be available at `http://localhost:3000`
-
-### 6. Build for production
-```bash
-npm run build
-```
-
-## Deployment
-
-### Deploy to Vercel
-
-The easiest way to deploy is with Vercel:
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Add the `GROQ_API_KEY` environment variable in Vercel project settings
-4. Vercel will automatically detect and build the project
-
-## Design
-
-- **Mobile-First**: 390px max-width with phone frame shadow
-- **Lidl Branding**: Official brand colors and typography (Nunito & DM Sans)
-- **Animations**: Smooth transitions, staggered reveals, and micro-interactions
-- **Accessibility**: Proper contrast ratios and semantic HTML
-
-## Tech Stack
-
-- **Frontend**: React 18 + Tailwind CSS
-- **Backend**: Vercel Serverless Functions (Node.js)
-- **AI**: Groq API (Llama 3.3 70B)
-- **Build**: Vite
-- **Fonts**: Google Fonts (Nunito, DM Sans)
-
-## API
-
-### POST `/api/recipe`
-
-Generates a recipe based on provided criteria.
-
-**Request:**
+The frontend sends a `POST /api/recipe` request with:
 ```json
 {
   "budget": 75,
-  "ingredients": ["eggs", "spinach"],
-  "surpriseMe": false
+  "ingredients": ["kylling", "pasta"],
+  "surpriseMe": false,
+  "beginnerMode": true,
+  "prioritizeDiscounts": false
 }
 ```
 
-All fields are optional. Leave budget/ingredients empty for Surprise Me mode.
+The serverless function calls Groq with a structured system prompt instructing it to:
+- Pick only from a curated list of **138 real Lidl Denmark products** with real DKK prices
+- Use generic names for loose produce (onions, garlic, spices etc.)
+- Return clean JSON with dish name, ingredients, steps, total cost, and savings
+- Respect budget, ingredient, beginner, and discount constraints simultaneously
 
-**Response:**
-```json
-{
-  "dishName": "Spinach Omelette",
-  "heroEmoji": "🍳",
-  "funIntro": "Quick, healthy, and delicious!",
-  "ingredients": [
-    {
-      "name": "Eggs 6-pack",
-      "lidlProductName": "Lidl Favorit Eggs",
-      "price": 12.95,
-      "onSale": true,
-      "checked": true
-    }
-  ],
-  "steps": ["Step 1...", "Step 2..."],
-  "totalCost": 67.5,
-  "savings": 15.0
-}
+Emojis are stripped from the AI response server-side and assigned separately to prevent JSON parse errors.
+
+---
+
+## 💻 Local Development
+
+> ⚠️ The `/api/recipe` endpoint requires Vercel's serverless runtime and will not work with `npm run dev` alone. Test the full app on the deployed Vercel URL.
+
+```bash
+# Clone the repo
+git clone https://github.com/Yasminekf0/MyLidlChef.git
+cd MyLidlChef
+
+# Install dependencies
+npm install
+
+# Start the frontend (UI only — API won't work locally)
+npm run dev
 ```
 
-## Browser Support
+### Environment Variables
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+Create a `.env` file in the project root:
 
-## License
+```
+GROQ_API_KEY=your_groq_api_key_here
+VITE_UNSPLASH_ACCESS_KEY=your_unsplash_access_key_here
+```
 
-MIT
+For deployment, add these in **Vercel → Project Settings → Environment Variables**.
+
+| Variable | Where to get it |
+|---|---|
+| `GROQ_API_KEY` | [console.groq.com](https://console.groq.com) — free, no credit card |
+| `VITE_UNSPLASH_ACCESS_KEY` | [unsplash.com/developers](https://unsplash.com/developers) — free |
+
+---
+
+## 📁 Project Structure
+
+```
+MyLidlChef/
+├── api/
+│   └── recipe.js          # Vercel serverless function — Groq AI integration
+├── src/
+│   ├── App.jsx            # Main app — all screens and state management
+│   ├── Journey.jsx        # Gamification / journey page component
+│   ├── lidl-products.js   # 138 real Lidl Denmark products with DKK prices
+│   └── index.css          # Global styles
+├── index.html             # Custom cursor + app shell
+├── vercel.json            # Vercel deployment config
+└── vite.config.js
+```
+
+---
+
+## 🗺️ The Journey — Gamification System
+
+MyLidlChef isn't just a recipe tool — it's a cooking progression system inspired by Duolingo:
+
+| Step | Name | Description |
+|---|---|---|
+| ✅ Step 1 | Opskrift Mester | Find your first recipe |
+| 🍳 Step 2 | Spar Smart | Use today's deals |
+| 🔒 Step 3 | Mester Kok | Share your finished dish and earn points |
+
+Users level up from **Begynder Kok** → **Øvet Kok** → **Mester Kok** as they cook more, discover deals, and engage with the community.
+
+---
+
+## 🌍 Deployment
+
+The app is live at: **[my-lidl-chef.vercel.app](https://my-lidl-chef.vercel.app)**
+
+Every push to the `main` branch on GitHub triggers an automatic Vercel redeploy.
+
+---
+
+## 💡 Product Vision
+
+MyLidlChef was built as a hackathon concept to answer one question:
+
+> *How can Lidl+ help young people eat healthier without spending more?*
+
+The answer combines three things Lidl already has — products, prices, and the Lidl+ app — with AI to remove the biggest barrier to healthy cooking: not knowing what to make with what you have and what's on sale.
+
+The gamification layer turns one-off recipe lookups into a habit-forming journey, keeping young users engaged with the Lidl+ ecosystem over time.
+
+---
+
+## 🔗 Resources
+
+* 🌐 **Live App**: [my-lidl-chef.vercel.app](https://my-lidl-chef.vercel.app)
+* 🎥 **Demo Video**: Coming soon
+
+---
+
+*Built February 2026*
